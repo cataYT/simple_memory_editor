@@ -18,9 +18,9 @@ pub(crate) struct ProcessMemory
 	handle: HANDLE,
 }
 
-impl ProcessMemory 
+impl ProcessMemory
 {
-	pub(crate) unsafe fn new(pid: u32) -> Self 
+	unsafe fn new(pid: u32) -> Self 
 	{
 		let handle: HANDLE = match OpenProcess(PROCESS_ALL_ACCESS, false, pid) 
 		{
@@ -33,13 +33,18 @@ impl ProcessMemory
 
 		ProcessMemory { handle }
 	}
+	
+	pub fn safe_new(pid: u32) -> Self
+	{
+		unsafe { Self::new(pid) }
+	}
 
-	pub(crate) unsafe fn read_memory
+	 unsafe fn read_memory
 	(
 		&self,
 		base_addr: *const c_void,
 		buffer: *mut c_void,
-		size: usize,
+		size: usize
 	) -> Result<usize, String> 
 	{
 		let mut bytes_read: usize = 0;
@@ -50,8 +55,18 @@ impl ProcessMemory
 			Err(e) => Err(format!("Could not read memory: {e}").into()),
 		}
 	}
+	
+	pub fn safe_read(
+		&self,
+		base_addr: *const c_void,
+		buffer: *mut c_void,
+		size: usize
+	) -> Result<usize, String>
+	{
+		unsafe { self.read_memory(base_addr, buffer, size) }
+	}
 
-	pub(crate) unsafe fn write_memory
+	unsafe fn write_memory
 	(
 		&self,
 		base_addr: *mut c_void,
@@ -67,14 +82,23 @@ impl ProcessMemory
 			Err(e) => Err(format!("Could not write memory: {e}").into()),
 		}
 	}
+	
+	pub fn safe_write(
+		&self,
+		base_addr: *mut c_void,
+		buffer: *const c_void,
+		size: usize
+	) -> Result<usize, String>
+	{
+		unsafe { self.write_memory(base_addr, buffer, size) }
+	}
 }
 
 impl Drop for ProcessMemory 
 {
 	fn drop(&mut self) 
 	{
-		unsafe 
-			{
+		unsafe {
 			if !self.handle.is_invalid() 
 			{
 				let _ = CloseHandle(self.handle);

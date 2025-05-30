@@ -20,21 +20,23 @@ pub(crate) struct ProcessMemory
 
 impl ProcessMemory 
 {
-	pub(crate) unsafe fn new(pid: u32) -> Self 
+	pub fn new(pid: u32) -> Self
 	{
-		let handle: HANDLE = match OpenProcess(PROCESS_ALL_ACCESS, false, pid) 
-		{
-			Ok(handle) => handle,
-			Err(e) => {
-				eprintln!("Could not open process: {:?}", e);
-				exit(1);
+		let handle: HANDLE = unsafe {
+			match OpenProcess(PROCESS_ALL_ACCESS, false, pid) 
+			{
+				Ok(handle) => handle,
+				Err(e) => {
+					eprintln!("Could not open process: {:?}", e);
+					exit(1);
+				}
 			}
 		};
 
 		ProcessMemory { handle }
 	}
 
-	pub(crate) unsafe fn read_memory
+	pub fn read_memory
 	(
 		&self,
 		base_addr: *const c_void,
@@ -44,14 +46,16 @@ impl ProcessMemory
 	{
 		let mut bytes_read: usize = 0;
 
-		match ReadProcessMemory(self.handle, base_addr, buffer, size, Some(&mut bytes_read)) 
-		{
-			Ok(_) => Ok(bytes_read),
-			Err(e) => Err(format!("Could not read memory: {e}").into()),
+		unsafe { 
+			match ReadProcessMemory(self.handle, base_addr, buffer, size, Some(&mut bytes_read)) 
+			{
+				Ok(_) => Ok(bytes_read),
+				Err(e) => Err(format!("Could not read memory: {e}").into()),
+			} 
 		}
 	}
 
-	pub(crate) unsafe fn write_memory
+	pub fn write_memory
 	(
 		&self,
 		base_addr: *mut c_void,
@@ -61,10 +65,12 @@ impl ProcessMemory
 	{
 		let mut bytes_written: usize = 0;
 
-		match WriteProcessMemory(self.handle, base_addr, buffer, size, Some(&mut bytes_written)) 
-		{
-			Ok(_) => Ok(bytes_written),
-			Err(e) => Err(format!("Could not write memory: {e}").into()),
+		unsafe {
+			match WriteProcessMemory(self.handle, base_addr, buffer, size, Some(&mut bytes_written)) 
+			{
+				Ok(_) => Ok(bytes_written),
+				Err(e) => Err(format!("Could not write memory: {e}").into()),
+			} 
 		}
 	}
 }

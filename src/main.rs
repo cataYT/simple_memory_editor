@@ -85,19 +85,17 @@ pub fn parse_args(args: Vec<String>)
 		}
 	};
 
-	let process_memory: ProcessMemory = unsafe { ProcessMemory::new(pid) };
+	let process_memory: ProcessMemory = ProcessMemory::new(pid);
 
 	match mode.as_deref()
 	{
 		Some("read") => {
 			let mut buffer: u32 = 0;
-			let result: Result<usize, String> = unsafe {
-				process_memory.read_memory(
-					base_addr,
-					&mut buffer as *mut _ as *mut c_void,
-					size_of::<u32>(),
-				)
-			};
+			let result: Result<usize, String> = process_memory.read_memory(
+				base_addr,
+				&mut buffer as *mut _ as *mut c_void,
+				size_of::<u32>()
+			);
 			match result
 			{
 				Ok(_) => println!("Read value: {}", buffer),
@@ -107,13 +105,11 @@ pub fn parse_args(args: Vec<String>)
 		Some("write") => {
 			if let Some(value) = write_value
 			{
-				let result: Result<usize, String> = unsafe {
-					process_memory.write_memory(
-						base_addr as *mut c_void,
-						&value as *const _ as *const c_void,
-						size_of::<u32>(),
-					)
-				};
+				let result: Result<usize, String> = process_memory.write_memory(
+					base_addr as *mut c_void,
+					&value as *const _ as *const c_void, 
+					size_of::<u32>()
+				);
 				match result
 				{
 					Ok(_) => println!("Wrote value: {}", value),
